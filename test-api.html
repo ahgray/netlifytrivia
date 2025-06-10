@@ -19,9 +19,14 @@
             try {
                 const response = await fetch('/.netlify/functions/get-global-stats');
                 const data = await response.json();
-                output.textContent += 'Success!\n' + JSON.stringify(data, null, 2);
+                
+                if (!response.ok) {
+                    output.textContent += 'Error ' + response.status + ':\n' + JSON.stringify(data, null, 2);
+                } else {
+                    output.textContent += 'Success!\n' + JSON.stringify(data, null, 2);
+                }
             } catch (error) {
-                output.textContent += 'Error: ' + error.message;
+                output.textContent += 'Network Error: ' + error.message;
             }
         }
         
@@ -32,9 +37,14 @@
                     method: 'POST'
                 });
                 const data = await response.json();
-                output.textContent += 'Success!\n' + JSON.stringify(data, null, 2);
+                
+                if (!response.ok) {
+                    output.textContent += 'Error ' + response.status + ':\n' + JSON.stringify(data, null, 2);
+                } else {
+                    output.textContent += 'Success!\n' + JSON.stringify(data, null, 2);
+                }
             } catch (error) {
-                output.textContent += 'Error: ' + error.message;
+                output.textContent += 'Network Error: ' + error.message;
             }
         }
     </script>

@@ -19,21 +19,29 @@ exports.handler = async (event, context) => {
   }
 
   try {
+    console.log('Starting increment-player function');
+    
     const { getStore } = await import('@netlify/blobs');
+    console.log('Successfully imported @netlify/blobs');
+    
     const store = getStore('trivia-stats');
+    console.log('Got store instance');
     
     // Get current stats
     const currentStats = await store.get('global-stats', { type: 'json' }) || {
       totalPlayers: 0,
       totalGamesPlayed: 0
     };
+    console.log('Current stats:', currentStats);
     
     // Increment
     currentStats.totalPlayers += 1;
     currentStats.totalGamesPlayed += 1;
+    console.log('Updated stats:', currentStats);
     
     // Save updated stats
     await store.setJSON('global-stats', currentStats);
+    console.log('Successfully saved stats');
     
     return {
       statusCode: 200,
@@ -41,11 +49,17 @@ exports.handler = async (event, context) => {
       body: JSON.stringify(currentStats)
     };
   } catch (error) {
-    console.error('Error:', error);
+    console.error('Detailed error in increment-player:', error);
+    console.error('Error stack:', error.stack);
+    console.error('Error message:', error.message);
     return {
       statusCode: 500,
       headers,
-      body: JSON.stringify({ error: 'Failed to increment player count' })
+      body: JSON.stringify({ 
+        error: 'Failed to increment player count',
+        details: error.message,
+        type: error.name
+      })
     };
   }
 };
