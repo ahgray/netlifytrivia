@@ -1,10 +1,4 @@
 // netlify/functions/increment-player.js
-const fetch = require('node-fetch');
-
-const BIN_ID = '6774d8a8e41b4d34e456e3c9';
-const API_KEY = '$2a$10$7JQJgfH.E3kQwVkrBiWjXeRAIa1NwM4cE0xGsNpN9QKGzRpUdN6E6';
-const API_URL = `https://api.jsonbin.io/v3/b/${BIN_ID}`;
-
 exports.handler = async (event, context) => {
   const headers = {
     'Access-Control-Allow-Origin': '*',
@@ -25,45 +19,26 @@ exports.handler = async (event, context) => {
   }
 
   try {
-    // Get current data
-    const getResponse = await fetch(API_URL + '/latest', {
-      headers: {
-        'X-Access-Key': API_KEY
-      }
-    });
+    const { getStore } = await import('@netlify/blobs');
+    const store = getStore('trivia-stats');
     
-    let currentData = { questions: {}, totalPlayers: 0, totalGamesPlayed: 0 };
-    
-    if (getResponse.ok) {
-      const responseData = await getResponse.json();
-      currentData = responseData.record || currentData;
-    }
+    // Get current stats
+    const currentStats = await store.get('global-stats', { type: 'json' }) || {
+      totalPlayers: 0,
+      totalGamesPlayed: 0
+    };
     
     // Increment
-    currentData.totalPlayers = (currentData.totalPlayers || 0) + 1;
-    currentData.totalGamesPlayed = (currentData.totalGamesPlayed || 0) + 1;
+    currentStats.totalPlayers += 1;
+    currentStats.totalGamesPlayed += 1;
     
-    // Save updated data
-    const saveResponse = await fetch(API_URL, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Access-Key': API_KEY
-      },
-      body: JSON.stringify(currentData)
-    });
-    
-    if (!saveResponse.ok) {
-      throw new Error('Failed to save data');
-    }
+    // Save updated stats
+    await store.setJSON('global-stats', currentStats);
     
     return {
       statusCode: 200,
       headers,
-      body: JSON.stringify({ 
-        totalPlayers: currentData.totalPlayers,
-        totalGamesPlayed: currentData.totalGamesPlayed 
-      })
+      body: JSON.stringify(currentStats)
     };
   } catch (error) {
     console.error('Error:', error);
@@ -74,3 +49,4 @@ exports.handler = async (event, context) => {
     };
   }
 };
+

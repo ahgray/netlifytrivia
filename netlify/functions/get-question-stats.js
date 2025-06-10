@@ -1,11 +1,4 @@
-
 // netlify/functions/get-question-stats.js
-const fetch = require('node-fetch');
-
-const BIN_ID = '6774d8a8e41b4d34e456e3c9';
-const API_KEY = '$2a$10$7JQJgfH.E3kQwVkrBiWjXeRAIa1NwM4cE0xGsNpN9QKGzRpUdN6E6';
-const API_URL = `https://api.jsonbin.io/v3/b/${BIN_ID}`;
-
 exports.handler = async (event, context) => {
   const headers = {
     'Access-Control-Allow-Origin': '*',
@@ -36,23 +29,14 @@ exports.handler = async (event, context) => {
   }
 
   try {
-    const response = await fetch(API_URL + '/latest', {
-      headers: {
-        'X-Access-Key': API_KEY
-      }
-    });
+    const { getStore } = await import('@netlify/blobs');
+    const store = getStore('trivia-stats');
     
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
+    const stats = await store.get(`question-${questionId}`, { type: 'json' }) || {
+      correct: 0,
+      total: 0
+    };
     
-    const data = await response.json();
-    const record = data.record || { questions: {} };
-    
-    const stats = record.questions && record.questions[questionId] 
-      ? record.questions[questionId] 
-      : { correct: 0, total: 0 };
-
     return {
       statusCode: 200,
       headers,
