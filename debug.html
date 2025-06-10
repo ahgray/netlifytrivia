@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modern Trivia Game - Debug Version</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+                'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+                sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+    
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // API Base URL - let's log what we're using
+        const API_BASE = window.location.hostname === 'localhost' 
+            ? 'http://localhost:8888/.netlify/functions'  // Netlify Dev
+            : '/.netlify/functions';  // Production
+        
+        console.log('API Base URL:', API_BASE);
+        console.log('Current hostname:', window.location.hostname);
+
+        // Icon components (keeping these simple)
+        const Trophy = ({ className = "" }) => (
+            <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 9V2h12v7M6 9H3.5a2.5 2.5 0 010-5H6m0 5h12m0-5h2.5a2.5 2.5 0 110 5H18m-6 0v13m0 0l-4-2m4 2l4-2"></path>
+            </svg>
+        );
+
+        const ChevronRight = ({ className = "" }) => (
+            <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7"></path>
+            </svg>
+        );
+
+        const Globe = ({ className = "" }) => (
+            <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="2" y1="12" x2="22" y2="12"></line>
+                <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+            </svg>
+        );
+
+        // Test questions
+        const QUESTIONS_DATA = [
+            {
+                "id": "transport_innovation_001",
+                "category": "stem",
+                "subcategory": "Transportation Innovation",
+                "difficulty": "medium",
+                "question": "What was the first commercially successful electric car company in the 21st century?",
+                "options": ["Tesla", "Nissan", "Toyota", "General Motors"],
+                "correctAnswer": 0,
+                "explanation": "Tesla revolutionized the electric vehicle market with the Roadster in 2008.",
+                "funFact": "Tesla's first Roadster could go from 0-60 mph in 3.7 seconds!"
+            }
+        ];
+
+        // API Functions with detailed logging
+        async function getGlobalStats() {
+            const url = `${API_BASE}/get-global-stats`;
+            console.log('Fetching global stats from:', url);
+            
+            try {
+                const response = await fetch(url);
+                console.log('Response status:', response.status);
+                console.log('Response headers:', response.headers);
+                
+                if (!response.ok) {
+                    console.error('Response not OK:', response.statusText);
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                console.log('Global stats received:', data);
+                return data;
+            } catch (error) {
+                console.error('Failed to fetch global stats:', error);
+                console.error('Error details:', error.message);
+                return { totalPlayers: 0, totalGamesPlayed: 0 };
+            }
+        }
+
+        async function incrementPlayer() {
+            const url = `${API_BASE}/increment-player`;
+            console.log('Incrementing player at:', url);
+            
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                console.log('Increment response status:', response.status);
+                
+                if (!response.ok) {
+                    console.error('Response not OK:', response.statusText);
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                console.log('Increment response:', data);
+                return data;
+            } catch (error) {
+                console.error('Failed to increment player:', error);
+                console.error('Error details:', error.message);
+            }
+        }
+
+        function TriviaGame() {
+            const [gameState, setGameState] = useState('setup');
+            const [globalStats, setGlobalStats] = useState({ totalPlayers: 0 });
+            const [isOnline, setIsOnline] = useState(false);
+            const [debugInfo, setDebugInfo] = useState('');
+
+            // Test API connection on mount
+            useEffect(() => {
+                console.log('Component mounted, testing API connection...');
+                
+                const testAPI = async () => {
+                    setDebugInfo('Testing API connection...');
+                    
+                    try {
+                        const stats = await getGlobalStats();
+                        setGlobalStats(stats);
+                        setIsOnline(true);
+                        setDebugInfo(`API Connected! Players: ${stats.totalPlayers}`);
+                    } catch (error) {
+                        setIsOnline(false);
+                        setDebugInfo(`API Error: ${error.message}`);
+                    }
+                };
+                
+                testAPI();
+            }, []);
+
+            const handleStartGame = async () => {
+                console.log('Start game clicked');
+                
+                if (isOnline) {
+                    console.log('Online - incrementing player count');
+                    const result = await incrementPlayer();
+                    if (result) {
+                        setGlobalStats(result);
+                    }
+                }
+                
+                // For now, don't actually start the game - just test the API
+                alert('API test complete - check console for details');
+            };
+
+            return (
+                <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 flex items-center justify-center p-4">
+                    <div className="bg-white/10 backdrop-blur-lg rounded-3xl p-8 max-w-md w-full shadow-2xl border border-white/20">
+                        <div className="text-center mb-8">
+                            <Trophy className="w-16 h-16 text-yellow-400 mx-auto mb-4" />
+                            <h1 className="text-4xl font-bold text-white mb-2">Trivia Game Debug</h1>
+                            <p className="text-gray-300">Testing API Connection</p>
+                            
+                            <div className="mt-4">
+                                <div className="text-sm text-white mb-2">
+                                    API Base: <code className="bg-black/30 px-2 py-1 rounded">{API_BASE}</code>
+                                </div>
+                                
+                                <div className="text-sm text-white mb-2">
+                                    Debug Info: <code className="bg-black/30 px-2 py-1 rounded">{debugInfo}</code>
+                                </div>
+                                
+                                {isOnline ? (
+                                    <div className="flex items-center justify-center gap-2 text-green-400">
+                                        <Globe className="w-5 h-5" />
+                                        <span className="text-sm">
+                                            Connected • {globalStats.totalPlayers} players
+                                        </span>
+                                    </div>
+                                ) : (
+                                    <div className="text-yellow-400 text-sm">
+                                        API Offline - Check console for errors
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                        
+                        <button
+                            onClick={handleStartGame}
+                            className="w-full bg-gradient-to-r from-purple-500 to-blue-500 text-white py-4 rounded-2xl font-bold text-lg hover:from-purple-600 hover:to-blue-600 transition-all transform hover:scale-105 shadow-lg"
+                        >
+                            Test API Connection
+                        </button>
+                        
+                        <div className="mt-4 text-xs text-white/60 text-center">
+                            Open browser console (F12) to see detailed logs
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        // Render the app
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<TriviaGame />);
+    </script>
+</body>
+</html>
