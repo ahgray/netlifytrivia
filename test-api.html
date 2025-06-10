@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Test</title>
+</head>
+<body>
+    <h1>Netlify Functions API Test</h1>
+    <button onclick="testGetStats()">Test Get Global Stats</button>
+    <button onclick="testIncrement()">Test Increment Player</button>
+    <pre id="output"></pre>
+
+    <script>
+        const output = document.getElementById('output');
+        
+        async function testGetStats() {
+            output.textContent = 'Testing get-global-stats...\n';
+            try {
+                const response = await fetch('/.netlify/functions/get-global-stats');
+                const data = await response.json();
+                output.textContent += 'Success!\n' + JSON.stringify(data, null, 2);
+            } catch (error) {
+                output.textContent += 'Error: ' + error.message;
+            }
+        }
+        
+        async function testIncrement() {
+            output.textContent = 'Testing increment-player...\n';
+            try {
+                const response = await fetch('/.netlify/functions/increment-player', {
+                    method: 'POST'
+                });
+                const data = await response.json();
+                output.textContent += 'Success!\n' + JSON.stringify(data, null, 2);
+            } catch (error) {
+                output.textContent += 'Error: ' + error.message;
+            }
+        }
+    </script>
+</body>
+</html>
