@@ -1,5 +1,7 @@
-// netlify/functions/get-question-stats.js
-exports.handler = async (event, context) => {
+// netlify/functions/get-question-stats.mjs
+import { getStore } from '@netlify/blobs';
+
+export default async function handler(event, context) {
   const headers = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'Content-Type',
@@ -29,7 +31,6 @@ exports.handler = async (event, context) => {
   }
 
   try {
-    const { getStore } = await import('@netlify/blobs');
     const store = getStore('trivia-stats');
     
     const stats = await store.get(`question-${questionId}`, { type: 'json' }) || {
@@ -50,5 +51,4 @@ exports.handler = async (event, context) => {
       body: JSON.stringify({ correct: 0, total: 0 })
     };
   }
-};
-
+}

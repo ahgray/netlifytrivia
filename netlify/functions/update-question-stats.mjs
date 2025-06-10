@@ -1,5 +1,7 @@
-// netlify/functions/update-question-stats.js
-exports.handler = async (event, context) => {
+// netlify/functions/update-question-stats.mjs
+import { getStore } from '@netlify/blobs';
+
+export default async function handler(event, context) {
   const headers = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'Content-Type',
@@ -29,7 +31,6 @@ exports.handler = async (event, context) => {
       };
     }
 
-    const { getStore } = await import('@netlify/blobs');
     const store = getStore('trivia-stats');
     
     // Get current stats
@@ -60,7 +61,7 @@ exports.handler = async (event, context) => {
       body: JSON.stringify({ error: 'Failed to update stats' })
     };
   }
-};
+}
 
 // Updated package.json - make sure you have this dependency
 /*

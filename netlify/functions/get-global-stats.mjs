@@ -2,7 +2,9 @@
 // This is the simplest solution since you're already on Netlify
 
 // netlify/functions/get-global-stats.js
-exports.handler = async (event, context) => {
+import { getStore } from '@netlify/blobs';
+
+export default async function handler(event, context) {
   const headers = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'Content-Type',
@@ -23,9 +25,6 @@ exports.handler = async (event, context) => {
 
   try {
     console.log('Starting get-global-stats function');
-    
-    const { getStore } = await import('@netlify/blobs');
-    console.log('Successfully imported @netlify/blobs');
     
     const store = getStore('trivia-stats');
     console.log('Got store instance');
