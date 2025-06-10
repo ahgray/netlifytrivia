@@ -8,13 +8,25 @@ export default async function handler(event, context) {
     'Access-Control-Allow-Methods': 'POST, OPTIONS'
   };
 
-  if (event.httpMethod === 'OPTIONS') {
+  // Debug logging to see the event structure
+  console.log('Event object:', JSON.stringify(event, null, 2));
+  console.log('HTTP Method:', event.httpMethod);
+  console.log('Request method:', event.requestContext?.http?.method);
+
+  const method = event.httpMethod || event.requestContext?.http?.method;
+  console.log('Detected method:', method);
+
+  if (method === 'OPTIONS') {
     return new Response('', { status: 200, headers });
   }
 
-  if (event.httpMethod !== 'POST') {
+  if (method !== 'POST') {
     return new Response(
-      JSON.stringify({ error: 'Method not allowed' }),
+      JSON.stringify({ 
+        error: 'Method not allowed',
+        receivedMethod: method,
+        eventKeys: Object.keys(event)
+      }),
       { 
         status: 405, 
         headers: { ...headers, 'Content-Type': 'application/json' }
