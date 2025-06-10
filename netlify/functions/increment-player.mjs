@@ -9,15 +9,17 @@ export default async function handler(event, context) {
   };
 
   if (event.httpMethod === 'OPTIONS') {
-    return { statusCode: 200, headers, body: '' };
+    return new Response('', { status: 200, headers });
   }
 
   if (event.httpMethod !== 'POST') {
-    return { 
-      statusCode: 405, 
-      headers,
-      body: JSON.stringify({ error: 'Method not allowed' }) 
-    };
+    return new Response(
+      JSON.stringify({ error: 'Method not allowed' }),
+      { 
+        status: 405, 
+        headers: { ...headers, 'Content-Type': 'application/json' }
+      }
+    );
   }
 
   try {
@@ -43,24 +45,28 @@ export default async function handler(event, context) {
     await store.setJSON('global-stats', currentStats);
     console.log('Successfully saved stats');
     
-    return {
-      statusCode: 200,
-      headers,
-      body: JSON.stringify(currentStats)
-    };
+    return new Response(
+      JSON.stringify(currentStats),
+      { 
+        status: 200, 
+        headers: { ...headers, 'Content-Type': 'application/json' }
+      }
+    );
   } catch (error) {
     console.error('Detailed error in increment-player:', error);
     console.error('Error stack:', error.stack);
     console.error('Error message:', error.message);
-    return {
-      statusCode: 500,
-      headers,
-      body: JSON.stringify({ 
+    return new Response(
+      JSON.stringify({ 
         error: 'Failed to increment player count',
         details: error.message,
         type: error.name
-      })
-    };
+      }),
+      { 
+        status: 500, 
+        headers: { ...headers, 'Content-Type': 'application/json' }
+      }
+    );
   }
 };
 

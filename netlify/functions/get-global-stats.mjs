@@ -1,7 +1,7 @@
 // Using Netlify's built-in Blobs storage - no external services needed!
 // This is the simplest solution since you're already on Netlify
 
-// netlify/functions/get-global-stats.js
+// netlify/functions/get-global-stats.mjs
 import { getStore } from '@netlify/blobs';
 
 export default async function handler(event, context) {
@@ -12,15 +12,17 @@ export default async function handler(event, context) {
   };
 
   if (event.httpMethod === 'OPTIONS') {
-    return { statusCode: 200, headers, body: '' };
+    return new Response('', { status: 200, headers });
   }
 
   if (event.httpMethod !== 'GET') {
-    return { 
-      statusCode: 405, 
-      headers,
-      body: JSON.stringify({ error: 'Method not allowed' }) 
-    };
+    return new Response(
+      JSON.stringify({ error: 'Method not allowed' }), 
+      { 
+        status: 405, 
+        headers: { ...headers, 'Content-Type': 'application/json' }
+      }
+    );
   }
 
   try {
@@ -35,20 +37,24 @@ export default async function handler(event, context) {
     const stats = statsBlob || { totalPlayers: 0, totalGamesPlayed: 0 };
     console.log('Final stats:', stats);
     
-    return {
-      statusCode: 200,
-      headers,
-      body: JSON.stringify(stats)
-    };
+    return new Response(
+      JSON.stringify(stats),
+      { 
+        status: 200, 
+        headers: { ...headers, 'Content-Type': 'application/json' }
+      }
+    );
   } catch (error) {
     console.error('Detailed error in get-global-stats:', error);
     console.error('Error stack:', error.stack);
     console.error('Error message:', error.message);
-    return {
-      statusCode: 200,
-      headers,
-      body: JSON.stringify({ totalPlayers: 0, totalGamesPlayed: 0 })
-    };
+    return new Response(
+      JSON.stringify({ totalPlayers: 0, totalGamesPlayed: 0 }),
+      { 
+        status: 200, 
+        headers: { ...headers, 'Content-Type': 'application/json' }
+      }
+    );
   }
 };
 

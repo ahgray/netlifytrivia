@@ -9,26 +9,30 @@ export default async function handler(event, context) {
   };
 
   if (event.httpMethod === 'OPTIONS') {
-    return { statusCode: 200, headers, body: '' };
+    return new Response('', { status: 200, headers });
   }
 
   if (event.httpMethod !== 'POST') {
-    return { 
-      statusCode: 405, 
-      headers,
-      body: JSON.stringify({ error: 'Method not allowed' }) 
-    };
+    return new Response(
+      JSON.stringify({ error: 'Method not allowed' }),
+      { 
+        status: 405, 
+        headers: { ...headers, 'Content-Type': 'application/json' }
+      }
+    );
   }
 
   try {
     const { questionId, isCorrect } = JSON.parse(event.body);
     
     if (!questionId || isCorrect === undefined) {
-      return {
-        statusCode: 400,
-        headers,
-        body: JSON.stringify({ error: 'questionId and isCorrect are required' })
-      };
+      return new Response(
+        JSON.stringify({ error: 'questionId and isCorrect are required' }),
+        { 
+          status: 400, 
+          headers: { ...headers, 'Content-Type': 'application/json' }
+        }
+      );
     }
 
     const store = getStore('trivia-stats');
@@ -48,18 +52,22 @@ export default async function handler(event, context) {
     // Save updated stats
     await store.setJSON(`question-${questionId}`, currentStats);
     
-    return {
-      statusCode: 200,
-      headers,
-      body: JSON.stringify(currentStats)
-    };
+    return new Response(
+      JSON.stringify(currentStats),
+      { 
+        status: 200, 
+        headers: { ...headers, 'Content-Type': 'application/json' }
+      }
+    );
   } catch (error) {
     console.error('Error:', error);
-    return {
-      statusCode: 500,
-      headers,
-      body: JSON.stringify({ error: 'Failed to update stats' })
-    };
+    return new Response(
+      JSON.stringify({ error: 'Failed to update stats' }),
+      { 
+        status: 500, 
+        headers: { ...headers, 'Content-Type': 'application/json' }
+      }
+    );
   }
 }
 

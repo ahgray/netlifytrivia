@@ -9,25 +9,29 @@ export default async function handler(event, context) {
   };
 
   if (event.httpMethod === 'OPTIONS') {
-    return { statusCode: 200, headers, body: '' };
+    return new Response('', { status: 200, headers });
   }
 
   if (event.httpMethod !== 'GET') {
-    return { 
-      statusCode: 405, 
-      headers,
-      body: JSON.stringify({ error: 'Method not allowed' }) 
-    };
+    return new Response(
+      JSON.stringify({ error: 'Method not allowed' }),
+      { 
+        status: 405, 
+        headers: { ...headers, 'Content-Type': 'application/json' }
+      }
+    );
   }
 
   const { questionId } = event.queryStringParameters || {};
   
   if (!questionId) {
-    return {
-      statusCode: 400,
-      headers,
-      body: JSON.stringify({ error: 'questionId is required' })
-    };
+    return new Response(
+      JSON.stringify({ error: 'questionId is required' }),
+      { 
+        status: 400, 
+        headers: { ...headers, 'Content-Type': 'application/json' }
+      }
+    );
   }
 
   try {
@@ -38,17 +42,21 @@ export default async function handler(event, context) {
       total: 0
     };
     
-    return {
-      statusCode: 200,
-      headers,
-      body: JSON.stringify(stats)
-    };
+    return new Response(
+      JSON.stringify(stats),
+      { 
+        status: 200, 
+        headers: { ...headers, 'Content-Type': 'application/json' }
+      }
+    );
   } catch (error) {
     console.error('Error:', error);
-    return {
-      statusCode: 200,
-      headers,
-      body: JSON.stringify({ correct: 0, total: 0 })
-    };
+    return new Response(
+      JSON.stringify({ correct: 0, total: 0 }),
+      { 
+        status: 200, 
+        headers: { ...headers, 'Content-Type': 'application/json' }
+      }
+    );
   }
 }
