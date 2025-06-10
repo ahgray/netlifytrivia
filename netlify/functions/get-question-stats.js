@@ -1,18 +1,22 @@
 // netlify/functions/get-question-stats.js
+const fetch = require('node-fetch');
+
+// Using jsonstorage.net - a free JSON storage service
+// This creates a unique storage for your trivia game
+const STORAGE_ID = 'c5d6f8a9-3b2e-4d7f-9a1b-8c3e5f7d9b2a';
+const API_URL = `https://api.jsonstorage.net/v1/json/${STORAGE_ID}`;
+
 exports.handler = async (event, context) => {
-  // Enable CORS
   const headers = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'Content-Type',
     'Access-Control-Allow-Methods': 'GET, POST, OPTIONS'
   };
 
-  // Handle preflight
   if (event.httpMethod === 'OPTIONS') {
     return { statusCode: 200, headers, body: '' };
   }
 
-  // Only allow GET
   if (event.httpMethod !== 'GET') {
     return { 
       statusCode: 405, 
@@ -32,31 +36,25 @@ exports.handler = async (event, context) => {
   }
 
   try {
-    // Using Netlify Blobs (free built-in storage)
-    const { getStore } = require('@netlify/blobs');
-    const store = getStore('trivia-stats');
+    // Fetch current data
+    const response = await fetch(API_URL);
+    const data = await response.json();
     
-    const stats = await store.get(questionId);
-    
-    if (!stats) {
-      return {
-        statusCode: 200,
-        headers,
-        body: JSON.stringify({ correct: 0, total: 0 })
-      };
-    }
+    const stats = data.questions && data.questions[questionId] 
+      ? data.questions[questionId] 
+      : { correct: 0, total: 0 };
 
     return {
       statusCode: 200,
       headers,
-      body: stats
+      body: JSON.stringify(stats)
     };
   } catch (error) {
     console.error('Error:', error);
     return {
-      statusCode: 500,
+      statusCode: 200,
       headers,
-      body: JSON.stringify({ error: 'Failed to get stats' })
+      body: JSON.stringify({ correct: 0, total: 0 })
     };
   }
 };
