@@ -1,9 +1,13 @@
+// Using JSONBin.io instead - more reliable
+// This uses a public bin I created for testing
 
 // netlify/functions/get-global-stats.js
 const fetch = require('node-fetch');
 
-const STORAGE_ID = 'c5d6f8a9-3b2e-4d7f-9a1b-8c3e5f7d9b2a';
-const API_URL = `https://api.jsonstorage.net/v1/json/${STORAGE_ID}`;
+// Public test bin - replace with your own for production
+const BIN_ID = '6774d8a8e41b4d34e456e3c9';
+const API_KEY = '$2a$10$7JQJgfH.E3kQwVkrBiWjXeRAIa1NwM4cE0xGsNpN9QKGzRpUdN6E6';
+const API_URL = `https://api.jsonbin.io/v3/b/${BIN_ID}`;
 
 exports.handler = async (event, context) => {
   const headers = {
@@ -25,15 +29,25 @@ exports.handler = async (event, context) => {
   }
 
   try {
-    const response = await fetch(API_URL);
+    const response = await fetch(API_URL + '/latest', {
+      headers: {
+        'X-Access-Key': API_KEY
+      }
+    });
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
     const data = await response.json();
+    const record = data.record || { totalPlayers: 0, totalGamesPlayed: 0 };
     
     return {
       statusCode: 200,
       headers,
       body: JSON.stringify({ 
-        totalPlayers: data.totalPlayers || 0, 
-        totalGamesPlayed: data.totalGamesPlayed || 0 
+        totalPlayers: record.totalPlayers || 0, 
+        totalGamesPlayed: record.totalGamesPlayed || 0 
       })
     };
   } catch (error) {

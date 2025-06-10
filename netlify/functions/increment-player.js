@@ -1,8 +1,9 @@
 // netlify/functions/increment-player.js
 const fetch = require('node-fetch');
 
-const STORAGE_ID = 'c5d6f8a9-3b2e-4d7f-9a1b-8c3e5f7d9b2a';
-const API_URL = `https://api.jsonstorage.net/v1/json/${STORAGE_ID}`;
+const BIN_ID = '6774d8a8e41b4d34e456e3c9';
+const API_KEY = '$2a$10$7JQJgfH.E3kQwVkrBiWjXeRAIa1NwM4cE0xGsNpN9QKGzRpUdN6E6';
+const API_URL = `https://api.jsonbin.io/v3/b/${BIN_ID}`;
 
 exports.handler = async (event, context) => {
   const headers = {
@@ -24,34 +25,44 @@ exports.handler = async (event, context) => {
   }
 
   try {
-    // Fetch current data
-    let data = { questions: {}, totalPlayers: 0, totalGamesPlayed: 0 };
-    try {
-      const getResponse = await fetch(API_URL);
-      if (getResponse.ok) {
-        data = await getResponse.json();
+    // Get current data
+    const getResponse = await fetch(API_URL + '/latest', {
+      headers: {
+        'X-Access-Key': API_KEY
       }
-    } catch (e) {
-      // Use default data if fetch fails
+    });
+    
+    let currentData = { questions: {}, totalPlayers: 0, totalGamesPlayed: 0 };
+    
+    if (getResponse.ok) {
+      const responseData = await getResponse.json();
+      currentData = responseData.record || currentData;
     }
-
+    
     // Increment
-    data.totalPlayers = (data.totalPlayers || 0) + 1;
-    data.totalGamesPlayed = (data.totalGamesPlayed || 0) + 1;
+    currentData.totalPlayers = (currentData.totalPlayers || 0) + 1;
+    currentData.totalGamesPlayed = (currentData.totalGamesPlayed || 0) + 1;
     
     // Save updated data
-    await fetch(API_URL, {
+    const saveResponse = await fetch(API_URL, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data)
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Access-Key': API_KEY
+      },
+      body: JSON.stringify(currentData)
     });
-
+    
+    if (!saveResponse.ok) {
+      throw new Error('Failed to save data');
+    }
+    
     return {
       statusCode: 200,
       headers,
       body: JSON.stringify({ 
-        totalPlayers: data.totalPlayers,
-        totalGamesPlayed: data.totalGamesPlayed 
+        totalPlayers: currentData.totalPlayers,
+        totalGamesPlayed: currentData.totalGamesPlayed 
       })
     };
   } catch (error) {
@@ -63,15 +74,3 @@ exports.handler = async (event, context) => {
     };
   }
 };
-
-// Updated package.json - add node-fetch
-/*
-{
-  "name": "trivia-game-netlify",
-  "version": "1.0.0",
-  "description": "Trivia game with global stats using Netlify Functions",
-  "dependencies": {
-    "node-fetch": "^2.6.7"
-  }
-}
-*/

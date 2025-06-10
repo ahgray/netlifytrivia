@@ -1,10 +1,10 @@
+
 // netlify/functions/get-question-stats.js
 const fetch = require('node-fetch');
 
-// Using jsonstorage.net - a free JSON storage service
-// This creates a unique storage for your trivia game
-const STORAGE_ID = 'c5d6f8a9-3b2e-4d7f-9a1b-8c3e5f7d9b2a';
-const API_URL = `https://api.jsonstorage.net/v1/json/${STORAGE_ID}`;
+const BIN_ID = '6774d8a8e41b4d34e456e3c9';
+const API_KEY = '$2a$10$7JQJgfH.E3kQwVkrBiWjXeRAIa1NwM4cE0xGsNpN9QKGzRpUdN6E6';
+const API_URL = `https://api.jsonbin.io/v3/b/${BIN_ID}`;
 
 exports.handler = async (event, context) => {
   const headers = {
@@ -36,12 +36,21 @@ exports.handler = async (event, context) => {
   }
 
   try {
-    // Fetch current data
-    const response = await fetch(API_URL);
-    const data = await response.json();
+    const response = await fetch(API_URL + '/latest', {
+      headers: {
+        'X-Access-Key': API_KEY
+      }
+    });
     
-    const stats = data.questions && data.questions[questionId] 
-      ? data.questions[questionId] 
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    const record = data.record || { questions: {} };
+    
+    const stats = record.questions && record.questions[questionId] 
+      ? record.questions[questionId] 
       : { correct: 0, total: 0 };
 
     return {
@@ -58,3 +67,4 @@ exports.handler = async (event, context) => {
     };
   }
 };
+
