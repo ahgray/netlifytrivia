@@ -1,0 +1,8 @@
+{
+  "name": "trivia-game-netlify",
+  "version": "1.0.0",
+  "description": "Trivia game with global stats using Netlify Functions",
+  "dependencies": {
+    "@netlify/blobs": "^7.0.0"
+  }
+}
